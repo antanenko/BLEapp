@@ -11,7 +11,8 @@
 #import <CoreBluetooth/CoreBluetooth.h>
 #import "CarduinoViewCell.h"
 
-@interface ViewController : UIViewController <CBPeripheralDelegate, CBCentralManagerDelegate, UITableViewDelegate, UITableViewDataSource>
+@interface ViewController : UIViewController <CBPeripheralDelegate, CBCentralManagerDelegate, UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
+
 @property (strong, nonatomic) CBCentralManager *centralManager;
 @property (strong, nonatomic) NSMutableDictionary *devices;
 @property (strong, nonatomic) CBPeripheral *discoveredPeripheral;
@@ -21,17 +22,50 @@
 @property (strong, nonatomic) NSMutableData *data;
 
 
--(float)mapNumber: (float)x minimumXIn:(float)minXIn maximumXIn:(float)maxXIn mimimumXOut:(float)minXOut maximumXOut:(float)maxXOut;
+@property (weak, nonatomic) IBOutlet UITextField *myTextField;
+@property (strong, nonatomic) IBOutlet UIView *devicesView;
+@property (strong, nonatomic) IBOutlet UILabel *RSSI;
+@property (strong, nonatomic) IBOutlet UILabel *rxDataLabel;
 
-- (void)fadeDeviceMenuIn;
-- (void)fadeDeviceMenuOut;
+@property (nonatomic, retain) NSString *rxData;
+@property int previousAccelerationSlider;
+@property int counter;
+
+// Timers.
+@property (nonatomic, retain) NSTimer *rssiTimer;
+@property (nonatomic, retain) NSTimer *rxResponseTimer;
+@property (strong, nonatomic) IBOutlet UITableView *tableView;
+
+//Outlets.
+@property (strong, nonatomic) IBOutlet UIView *mainView;
+@property (strong, nonatomic) IBOutlet UILabel *steerLabel;
+
+
+//Buttons in Devices Table.
+@property (strong, nonatomic) IBOutlet UIButton *backFromDevices;
+@property (strong, nonatomic) IBOutlet UIButton *test;
+
+//BLE
+@property (strong, nonatomic) IBOutlet UIButton *scanForDevices;
+
+// Menu
+- (IBAction)menuButtonTouchUp:(id)sender;
+
+- (void)tick;
+
+@property (assign, nonatomic) short int mycmd;
+
+@property (assign, nonatomic) short int tt;
+
+
+
 @end
 
 //Holds steering slider value as an integer.
-short int steeringValue;
+//short int steeringValue;
 
 //Holds acceleration slider value as an integer.
-short int accelerationValue;
-short int mycmd;
+//short int accelerationValue;
 
-int counter;
+
+//int counter;
