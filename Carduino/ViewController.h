@@ -39,6 +39,7 @@
 //Outlets.
 @property (strong, nonatomic) IBOutlet UIView *mainView;
 @property (strong, nonatomic) IBOutlet UILabel *steerLabel;
+@property (strong, nonatomic) IBOutlet UILabel *statusLabel;
 
 
 //Buttons in Devices Table.
@@ -57,6 +58,15 @@
 
 @property (assign, nonatomic) short int tt;
 
+- (IBAction)pressButton:(id)sender;
+- (IBAction)pressButtonWave:(id)sender;
+- (IBAction)pressButtonVFL:(id)sender;
+- (IBAction)pressButtonDBm:(id)sender;
+- (IBAction)changeBackLight:(id)sender;
+- (IBAction)pressButtonOff:(id)sender;
+
+- (void)sendValue;
+- (void)sendCmd:(char) cmd;
 
 
 @end

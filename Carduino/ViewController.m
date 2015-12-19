@@ -46,11 +46,42 @@
     self.mycmd=0;
     self.tt = 0;
     
+    self.devices = [NSMutableDictionary dictionaryWithCapacity:6];
+    
+    NSLog(@"viewDidLoad run");
+}
+
+
+
+- (IBAction)pressButton:(id)sender{
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Message" message:@"Message1"
+                                                   delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
+    [alert show];
+}
+
+- (IBAction)pressButtonWave:(id)sender {
+    [self sendCmd:'w'];
+}
+
+- (IBAction)pressButtonVFL:(id)sender {
+    [self sendCmd:'f'];
+}
+
+- (IBAction)pressButtonDBm:(id)sender {
+    [self sendCmd:'d'];
+}
+
+- (IBAction)changeBackLight:(id)sender {
+    [self sendCmd:'b'];
+}
+
+- (IBAction)pressButtonOff:(id)sender {
+    [self sendCmd:'o'];
 }
 
 
 - (void)tick {
-    NSLog(@"Time tick");
+   // NSLog(@"Time tick");
     NSString *tm = [NSString stringWithFormat:@"%d",self.tt];
     
     int a;
@@ -88,6 +119,10 @@
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central {
     // You should test all scenarios
     if (central.state != CBCentralManagerStatePoweredOn) {
+        
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Message" message:@"Bluetooth is off"
+                                                       delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
+
         // In case Bluetooth is off.
         return;
         // Need to add code here stating unable to access Bluetooth.
@@ -96,21 +131,10 @@
         //If it's on, scan for devices.
         [self.centralManager scanForPeripheralsWithServices:nil options:nil];
     }
-    //NSLog(@"One  -- centralManagerDidUpdateState");
+    NSLog(@"One  -- centralManagerDidUpdateState!!!!");
     //NSLog(@"One");
 }
 
-- (NSMutableDictionary *)devices
-{
-    // Make sure the device dictionary is empty.
-    if (_devices == nil)
-    {
-        // Let's get the top 6 devices.
-        _devices = [NSMutableDictionary dictionaryWithCapacity:6];
-    }
-    // Return a dictionary of devices.
-    return _devices;
-}
 
 // Report what devices have been found.
 - (void)centralManager:(CBCentralManager *)central
@@ -137,6 +161,7 @@
     //NSLog(@"Two -- centralManager didDiscoverPeripheral");
 }
 
+
 // Run this whenever we have connected to a device.
 - (void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral {
     
@@ -145,6 +170,9 @@
     // Set the peripheral method's discoverServices to nil,
     // this searches for all services, its slower but inclusive.
     [peripheral discoverServices:nil];
+    
+    self.statusLabel.text = @"Connected";
+    
 }
 
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverServices:(NSError *)error
@@ -179,7 +207,7 @@ didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic
     if (bytes && strlen(bytes) == 2 && bytes[0] == (char)255 && bytes[1] == (char)225)
     {
         // Send the peripheral data to the MainViewController.
-        _selectedPeripheral = peripheral;
+        self.selectedPeripheral = peripheral;
         for (CBService * service in [_selectedPeripheral services])
         {
 
@@ -195,7 +223,8 @@ didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic
     }
 }
 
-- (void)sendValue:(NSString *) str
+
+- (void)sendValue
 {
     for (CBService * service in [_selectedPeripheral services])
     {
@@ -205,9 +234,6 @@ didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic
             NSMutableData *myData = [NSMutableData data];
             NSUInteger fb = 1,controlByte = 0;
         
-            
-
-            
             // Load all the data into myData.
             controlByte = 1;
             if(self.mycmd==0)
@@ -217,28 +243,25 @@ didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic
             {
                 self.mycmd=0;
             }
-                
-      
-            
             [myData appendBytes:&fb length:sizeof(unsigned char)];
             [myData appendBytes:&_mycmd length:sizeof(unsigned char)];
             [myData appendBytes:&_mycmd length:sizeof(unsigned char)];
             
-            const unichar myc[5]={'1','2','3'};
-            
-            
-         
+            const unichar myc[6]={'p','m','w','\r','\n'};
             
             // Create a string with all the data, formatted in ASCII.
             NSString * strData = [[NSString alloc] initWithData:myData encoding:NSASCIIStringEncoding];
             // Add the end-of-transmission character to allow the
             // Arduino to parse the string
-            str = [NSString stringWithFormat:@"%@:", strData];
+            NSString *str;
+          //  str = [NSString stringWithFormat:@"%@:", strData];
             
             
-          //  NSString *mystr  = [NSString stringWithCharacters:myc length:3];
+          //  NSString *mystr  = [NSString stringWithCharacters:myc length:5];
           //  str = [NSString stringWithString:mystr];
+            
             str = self.myTextField.text;
+            str = [str stringByAppendingString:@"\r\n"];
             
             // Write the str variable with all our movement data.
             [_selectedPeripheral writeValue:[str dataUsingEncoding:NSUTF8StringEncoding]
@@ -249,15 +272,34 @@ didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic
     }
 }
 
-#pragma mark textFieldDelegate
 
-- (BOOL)textFieldShouldReturn:(UITextField *)textField {
-    [textField resignFirstResponder];
-    return YES;
 
+- (void)sendCmd:(char) cmd
+{
+    for (CBService * service in [_selectedPeripheral services])
+    {
+        for (CBCharacteristic * characteristic in [service characteristics])
+        {
+            
+            unichar myc[6]={'p','m','w','\r','\n'};
+            
+            myc[2] = cmd;
+            
+            NSString *str  = [NSString stringWithCharacters:myc length:5];
+            
+            // Write the str variable with all our movement data.
+            [_selectedPeripheral writeValue:[str dataUsingEncoding:NSUTF8StringEncoding]
+                          forCharacteristic:characteristic type:CBCharacteristicWriteWithoutResponse];
+            
+            self.rxData = @" ";
+        }
+    }
 }
 
 
+
+
+//// Receive from BLE
 -(void)peripheral:(CBPeripheral *)peripheral didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
     NSString * str = [[NSString alloc] initWithData:[characteristic value] encoding:NSUTF8StringEncoding];
@@ -266,6 +308,15 @@ didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic
 }
 
 ////////////////////// Bluetooth Low Energy End //////////////////
+
+
+#pragma mark textFieldDelegate
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    [textField resignFirstResponder];
+    return YES;
+    
+}
 
 
 # pragma mark - table controller
@@ -406,17 +457,18 @@ didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic
 
     // Hide the devices list.
     [UIView beginAnimations:@"fade in" context:nil];
-    [UIView setAnimationDuration:.30];
+    [UIView setAnimationDuration:1];
     self.devicesView.alpha = 0;
     [UIView commitAnimations];
 }
 
 - (IBAction)test:(id)sender
 {
-    [self sendValue:[NSString stringWithFormat:@"%c:", 250]];
-    NSLog(@"Devices: %@", _devices);
-    NSLog(@"%d", [self.devices count]);
+    [self sendValue];
+    NSLog(@"Devices: %@", self.devices);
+    NSLog(@"Count devices=%d", [self.devices count]);
 }
+
 
 
 
