@@ -11,7 +11,7 @@
 
 
 #import "ViewController.h"
-#import "CarduinoViewCell.h"
+//#import "CarduinoViewCell.h"
 //#import "drawView.h"
 
 
@@ -22,17 +22,7 @@
 {
     [super viewDidLoad];
 
-    // Setup shadow for Devices TableView.
-    self.devicesView.layer.shadowColor = [UIColor blackColor].CGColor;
-    self.devicesView.layer.shadowOpacity = 0.5f;
-    self.devicesView.layer.shadowOffset = CGSizeMake(20.0f, 20.0f);
-    self.devicesView.layer.shadowRadius = 5.0f;
-    self.devicesView.layer.masksToBounds = NO;
-    
-    // Setup border for view backdrop.
-    //self.devicesView.layer.cornerRadius = 30;
-    self.devicesView.layer.borderWidth = 20.0;
-    self.devicesView.layer.borderColor = [UIColor colorWithRed:.10588 green:.25098 blue:.46666 alpha:1].CGColor;
+
     
     self.centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
     
@@ -49,14 +39,21 @@
     self.devices = [NSMutableDictionary dictionaryWithCapacity:6];
     
     NSLog(@"viewDidLoad run");
+    
+    
+    self.rxDataLabel.numberOfLines = 0;
+    self.rxDataLabel.text = @"Test\r\nTest2\r\nTest3\r\nTest4\r\nTest5";
 }
 
 
 
 - (IBAction)pressButton:(id)sender{
+/*
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Message" message:@"Message1"
                                                    delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
     [alert show];
+ */
+     [self sendCmd:'r'];
 }
 
 - (IBAction)pressButtonWave:(id)sender {
@@ -231,35 +228,8 @@ didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic
         for (CBCharacteristic * characteristic in [service characteristics])
         {
  
-            NSMutableData *myData = [NSMutableData data];
-            NSUInteger fb = 1,controlByte = 0;
-        
-            // Load all the data into myData.
-            controlByte = 1;
-            if(self.mycmd==0)
-            {
-                self.mycmd=1;
-            } else
-            {
-                self.mycmd=0;
-            }
-            [myData appendBytes:&fb length:sizeof(unsigned char)];
-            [myData appendBytes:&_mycmd length:sizeof(unsigned char)];
-            [myData appendBytes:&_mycmd length:sizeof(unsigned char)];
-            
-            const unichar myc[6]={'p','m','w','\r','\n'};
-            
-            // Create a string with all the data, formatted in ASCII.
-            NSString * strData = [[NSString alloc] initWithData:myData encoding:NSASCIIStringEncoding];
-            // Add the end-of-transmission character to allow the
-            // Arduino to parse the string
             NSString *str;
-          //  str = [NSString stringWithFormat:@"%@:", strData];
-            
-            
-          //  NSString *mystr  = [NSString stringWithCharacters:myc length:5];
-          //  str = [NSString stringWithString:mystr];
-            
+           
             str = self.myTextField.text;
             str = [str stringByAppendingString:@"\r\n"];
             
@@ -303,8 +273,9 @@ didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic
 -(void)peripheral:(CBPeripheral *)peripheral didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
     NSString * str = [[NSString alloc] initWithData:[characteristic value] encoding:NSUTF8StringEncoding];
-    self.rxData = str;
-    self.rxDataLabel.text = [NSString stringWithFormat:@"%@", str];
+    self.rxData = [self.rxData stringByAppendingString:str];
+    self.rxDataLabel.text = self.rxData;
+   
 }
 
 ////////////////////// Bluetooth Low Energy End //////////////////
@@ -321,7 +292,6 @@ didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic
 
 # pragma mark - table controller
 ////////////////////// Device Table View //////////////////
-
 - (NSInteger)numberOfSectionsInTableView: (UITableView *)tableView
 {
     return 1;
@@ -329,10 +299,9 @@ didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    //This counts how many items are in the deviceList array.
+    
     return [self.devices count];
 }
-
 
 - (UITableViewCell *)tableView: (UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -356,18 +325,18 @@ didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic
     /////////////////////////LOADS CUSTOM CELL/////////////////////////////
     
     // This is a handle for the tableView.
-    static NSString * carduinoTableIdentifier = @"iPadCarduinoTableCell";
+    static NSString * myTableIdentifier = @"myCell";
     
     
     // Get cell objects.;
-    CarduinoViewCell *cell = (CarduinoViewCell *)[tableView dequeueReusableCellWithIdentifier:carduinoTableIdentifier];
-    // If cell is equal to nil....
-    if (cell == nil){
-        // Load the custom cell.
-        NSArray *nib = [[NSBundle mainBundle] loadNibNamed:carduinoTableIdentifier owner:self options:nil];
-        // Use the prototype.
-        cell = [nib objectAtIndex:0];
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:myTableIdentifier];
+    
+    
+    if(!cell) {
+        NSLog(@"Create cell %ld,%ld", indexPath.section,indexPath.row);
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:myTableIdentifier];
     }
+
     
     /////////////////////////END/////////////////////////////
     
@@ -376,19 +345,10 @@ didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic
         // Don't list a device if there isn't one.
         if (devices)
         {
-            cell.deviceNameLabel.text = [devices name];
-            cell.uuidLabel.text = [uuids objectAtIndex:[indexPath row]];
+           cell.textLabel.text = [devices name];
+           cell.detailTextLabel.text = [uuids objectAtIndex:[indexPath row]];
         }
     }
-    
-    // Add image on the left of each cell.
-    cell.deviceImage.image = [UIImage imageNamed:@"oshw-logo-black.png"];
-    // Sets background color for the cells.  Alpha = opacity.  Float, 0-1.
-    // Will be used for device distance indication.  Let's have it as a base int.
-    
-    // Set the background color of the cells.
-    cell.backgroundColor = [UIColor colorWithRed:1 green:1 blue:(1) alpha:1];
-    
     return cell;
 }
 
@@ -424,16 +384,21 @@ didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic
 
 -(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    
+  //  cell.backgroundColor = self.randomColor;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     //Sets the height for each row to 90, the same size as the custom cell.
-    return 60;
+    return 50;
 }
 
 ////////////////////// Device Table View End///////////////
+
+
+
+
+
 
 
 

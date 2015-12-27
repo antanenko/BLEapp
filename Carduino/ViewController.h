@@ -10,7 +10,6 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
 #import <CoreBluetooth/CoreBluetooth.h>
-#import "CarduinoViewCell.h"
 
 @interface ViewController : UIViewController <CBPeripheralDelegate, CBCentralManagerDelegate, UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
 
@@ -29,8 +28,8 @@
 @property (strong, nonatomic) IBOutlet UILabel *rxDataLabel;
 
 @property (nonatomic, retain) NSString *rxData;
-@property int previousAccelerationSlider;
-@property int counter;
+//@property int previousAccelerationSlider;
+//@property int counter;
 
 // Timers.
 @property (nonatomic, retain) NSTimer *rssiTimer;
@@ -41,7 +40,6 @@
 @property (strong, nonatomic) IBOutlet UIView *mainView;
 @property (strong, nonatomic) IBOutlet UILabel *steerLabel;
 @property (strong, nonatomic) IBOutlet UILabel *statusLabel;
-
 
 //Buttons in Devices Table.
 @property (strong, nonatomic) IBOutlet UIButton *backFromDevices;

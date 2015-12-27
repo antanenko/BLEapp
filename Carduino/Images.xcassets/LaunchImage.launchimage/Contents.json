@@ -46,15 +46,15 @@
     {
       "orientation" : "portrait",
       "idiom" : "iphone",
+      "filename" : "synmaster-1.png",
       "extent" : "full-screen",
-      "filename" : "splash_iphone_old.png",
       "scale" : "1x"
     },
     {
       "orientation" : "portrait",
       "idiom" : "iphone",
+      "filename" : "synmaster.png",
       "extent" : "full-screen",
-      "filename" : "splash_iphone_old@2x.png",
       "scale" : "2x"
     },
     {
